@@ -1,0 +1,4 @@
+services:
+  backup-mongodb-s3:
+    image: registry.uni-kassel.dev/backup/mongodb-s3
+    build: .

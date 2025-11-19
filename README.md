@@ -28,42 +28,61 @@ DISCORD_WEBHOOK_URL=''
 
 ## Cron backup with kubernetes
 
-How usage with [Helm-CronJob](https://github.com/bambash/helm-cronjobs) chart.
+cronjob.yaml:
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-mongodb
+spec:
+  schedule: {{ .Values.backup.mongodb.schedule }}
+  timeZone: {{ .Values.backup.mongodb.timeZone }}
+  concurrencyPolicy: Replace
+  jobTemplate:
+    spec:
+      parallelism: 1
+      template:
+        spec:
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: registry-vs
+          containers:
+            - name: backup-mongodb-s3
+              image: {{ .Values.backup.mongodb.image }}
+              imagePullPolicy: Always
+              env:
+                - name: MONGODB_URI
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.mongodb.existingSecret }}
+                      key: MONGO_URI
+                - name: MINIO_BUCKET
+                  value: {{ .Values.backup.mongodb.bucket }}
+                - name: MINIO_PATH
+                  value: {{ .Values.backup.mongodb.path }}
+                - name: MINIO_ENDPOINT
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.mongodb.existingSecret }}
+                      key: minio-endpoint
+                - name: MINIO_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.mongodb.existingSecret }}
+                      key: minio-access-key
+                - name: MINIO_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.mongodb.existingSecret }}
+                      key: minio-secret-key
+                - name: DISCORD_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.backup.mongodb.existingSecret }}
+                      key: discord-webhook-url
+                      optional: true
+                - name: RETENTION_PERIOD
+                  value: {{ .Values.backup.mongodb.keep | quote }}
+```
 
-values.yaml:
-```
----
-jobs:
-  - name: mongodb-backup
-    image:
-      repository: registry.example.org/kube-public/mongodump_minio
-      tag: 1.0.0
-      imagePullPolicy: IfNotPresent
-    securityContext:
-      runAsUser: 1000
-      runAsGroup: 1000    
-    schedule: "0 1 * * *"
-    failedJobsHistoryLimit: 1
-    successfulJobsHistoryLimit: 3
-    concurrencyPolicy: Forbid
-    restartPolicy: OnFailure
-    serviceAccount: {}
-    env:
-    - name: MONGODB_URI
-      value: "mongodb://user:pass@mongodb-example-headless:27017"
-    - name: MINIO_ENDPOINT
-      value: 'http://localhost:9000'
-    - name: MINIO_BUCKET
-      value: backup-mongodb
-    - name: MINIO_PATH
-      value: mongodb-dumps
-    - name: RETENTION_PERIOD
-      value: 7d
-    - name: DISCORD_WEBHOOK_URL
-      value: "https://discord.com/api/webhooks/..."
-```
-Deploy cronjob:
-
-```
-helm upgrade --install  backup-mongodb -n backup-mongodb -f values.yaml . --set "jobs[0].env[0].value=$MONGODB_URI_SECRET" --set "jobs[0].env[2].value=$S3_URI_SECRET"
-```
+When not using Helm, replace the placeholders `{{ ... }}` with appropriate values.

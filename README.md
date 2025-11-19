@@ -1,9 +1,8 @@
-# MongoDB -> S3 (minio) docker/kubernetes backup
-Docker image to backup MongoDB 4.x to S3 (minio) using mongodump and compress gzip.
+# backup-mongodb-s3
+Simple script for backing up a MongoDB database to an S3 (minio) bucket.
 
-![](images/cover.png)
 
-## Features
+# Configuration
 - [x] Supports custom S3 endpoints (e.g. minio)
 - [x] Uses piping instead of tmp file
 - [x] Compression is done with gzip
@@ -12,12 +11,19 @@ Docker image to backup MongoDB 4.x to S3 (minio) using mongodump and compress gz
 
 ## Configuration
 ```bash
-S3_BUCKET=mongo1-backups
-S3_URI=http://s3-key:s3-secret@s3.host.tld
-MONGODB_URI=mongodb://mongo-host:27017/db-name
-MONGODB_READ_PREFERENCE=secondaryPreferred #default - `secondaryPreferred`
-MONGODB_OPLOG=true #default - `false`
-RETENTION_PERIOD=7d #default - `14d`
+# Required environment variables
+MONGODB_URI='mongodb://root:password@mongodb:27017/?authSource=admin'
+MINIO_ENDPOINT='http://localhost:9000'
+MINIO_ACCESS_KEY='minioadmin'
+MINIO_SECRET_KEY='minioadmin'
+
+# Optional variables
+MINIO_BUCKET='mongodb-backups'
+MINIO_PATH='mongodb-dumps'
+MONGODB_READ_PREFERENCE='secondaryPreferred'
+RETENTION_PERIOD='7d'
+MINIO_COMMAND='mc'
+DISCORD_WEBHOOK_URL=''
 ```
 
 ## Cron backup with kubernetes
@@ -45,14 +51,16 @@ jobs:
     env:
     - name: MONGODB_URI
       value: "mongodb://user:pass@mongodb-example-headless:27017"
-    - name: MONGODB_OPLOG
-      value: "true"
-    - name: S3_URI
-      value: "http://user:pass@minio.example.org"
-    - name: S3_BUCKET
+    - name: MINIO_ENDPOINT
+      value: 'http://localhost:9000'
+    - name: MINIO_BUCKET
       value: backup-mongodb
+    - name: MINIO_PATH
+      value: mongodb-dumps
     - name: RETENTION_PERIOD
       value: 7d
+    - name: DISCORD_WEBHOOK_URL
+      value: "https://discord.com/api/webhooks/..."
 ```
 Deploy cronjob:
 

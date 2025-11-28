@@ -9,7 +9,7 @@ set -e
 
 # Optional variables with defaults
 MINIO_BUCKET="${MINIO_BUCKET:-mongodb-backups}"
-MINIO_PATH="${MINIO_PATH:-mongodb-dumps}"
+MINIO_PATH="${MINIO_PATH-mongodb-dumps}"
 MONGODB_READ_PREFERENCE="${MONGODB_READ_PREFERENCE:-secondaryPreferred}"
 RETENTION_PERIOD="${RETENTION_PERIOD:-}"
 MINIO_COMMAND="${MINIO_COMMAND:-mc}"

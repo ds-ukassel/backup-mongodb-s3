@@ -59,4 +59,5 @@ if __name__ == "__main__":
     try:
         print(strategy_to_query(strategy, field))
     except ValueError as e:
+        print(e, file=sys.stderr)
         sys.exit(1)

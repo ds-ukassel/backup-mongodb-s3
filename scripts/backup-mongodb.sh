@@ -14,6 +14,8 @@ MONGODB_READ_PREFERENCE="${MONGODB_READ_PREFERENCE:-secondaryPreferred}"
 RETENTION_PERIOD="${RETENTION_PERIOD:-}"
 MINIO_COMMAND="${MINIO_COMMAND:-mc}"
 DISCORD_WEBHOOK_URL="${DISCORD_WEBHOOK_URL:-}"
+COLLECTION_STRATEGIES="${COLLECTION_STRATEGIES:-}"
+STRATEGY_ID="${STRATEGY_ID:-_id}"
 
 NOW=$(date +%Y%m%d_%H%M%S)
 
@@ -34,12 +36,30 @@ echo "[mongodb-backup] Configuring MinIO connection and creating bucket..."
 $MINIO_COMMAND alias set storage "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
 $MINIO_COMMAND mb -p "storage/$MINIO_BUCKET"
 
-echo "[mongodb-backup] Compress databases and upload to MinIO..."
+# If no collection strategies are specified, dump the whole instance
+if [ -z "$COLLECTION_STRATEGIES" ]; then
+  echo "[mongodb-backup] No collection strategies specified. Dumping entire MongoDB instance and uploading..."
 
-mongodump --archive --gzip --readPreference=$MONGODB_READ_PREFERENCE --uri "$MONGODB_URI" | \
-$MINIO_COMMAND pipe "storage/$MINIO_BUCKET/$MINIO_PATH/mongodump_$NOW.gz"
+  mongodump --archive --gzip --readPreference=$MONGODB_READ_PREFERENCE --uri "$MONGODB_URI" | \
+  $MINIO_COMMAND pipe "storage/$MINIO_BUCKET/$MINIO_PATH/mongodump_$NOW.bson.gz"
 
-echo "[mongodb-backup] Successfully uploaded mongodump_$NOW.gz to $MINIO_BUCKET bucket"
+  echo "[mongodb-backup] Successfully uploaded mongodump_$NOW.bson.gz to $MINIO_BUCKET bucket"
+else
+  echo "[mongodb-backup] Collection strategies specified. Dumping specified collections..."
+  for COLLECTION_STRATEGY in $COLLECTION_STRATEGIES; do
+    [ -z "$COLLECTION_STRATEGY" ] && continue # Skip empty entries
+
+    STRATEGY="${COLLECTION_STRATEGY#*=}"
+    DATABASE_COLLECTION="${COLLECTION_STRATEGY%%=*}"
+    DATABASE="${DATABASE_COLLECTION%%.*}"
+    COLLECTION="${DATABASE_COLLECTION#*.}"
+
+    echo "[mongodb-backup] Processing collection '$DATABASE.$COLLECTION' with strategy '$STRATEGY'..."
+
+    mongodump --archive --gzip --readPreference=$MONGODB_READ_PREFERENCE --uri "$MONGODB_URI" --db "$DATABASE" --collection "$COLLECTION" --query "$QUERY" | \
+    $MINIO_COMMAND pipe "storage/$MINIO_BUCKET/$MINIO_PATH/${COLLECTION}_$NOW.bson.gz"
+  done
+fi
 
 if [ -n "$RETENTION_PERIOD" ]; then
   echo "[mongodb-backup] Deleting backups older than $RETENTION_PERIOD from MinIO..."

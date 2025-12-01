@@ -49,10 +49,11 @@ else
   for COLLECTION_STRATEGY in $COLLECTION_STRATEGIES; do
     [ -z "$COLLECTION_STRATEGY" ] && continue # Skip empty entries
 
-    STRATEGY="${COLLECTION_STRATEGY#*=}"
-    DATABASE_COLLECTION="${COLLECTION_STRATEGY%%=*}"
-    DATABASE="${DATABASE_COLLECTION%%.*}"
-    COLLECTION="${DATABASE_COLLECTION#*.}"
+    # db.coll.ection=strategy
+    STRATEGY="${COLLECTION_STRATEGY#*=}" # Remove everything before =
+    DATABASE_COLLECTION="${COLLECTION_STRATEGY%%=*}" # Remove everything after =
+    DATABASE="${DATABASE_COLLECTION%%.*}" # Remove everything after first .
+    COLLECTION="${DATABASE_COLLECTION#*.}" # Remove everything before first .
 
     echo "[mongodb-backup] Processing collection '$DATABASE.$COLLECTION' with strategy '$STRATEGY'..."
 

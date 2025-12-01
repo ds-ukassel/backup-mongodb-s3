@@ -36,7 +36,7 @@ The strategies are defined in the `COLLECTION_STRATEGIES` environment variable a
 Supported strategies:
 - `full`: full backup of the collection
 - `day`: [yesterday 00:00, today 00:00)
-- `week`: [1st day of last week 00:00, 1st day of this week 00:00)
+- `week`: [Monday of last week 00:00, Monday of this week 00:00)
 - `month`: [1st day of last month 00:00, 1st day of this month 00:00)
 
 The `STRATEGY_ID` variable defines the field used for filtering the documents in the collection (default is `_id`).

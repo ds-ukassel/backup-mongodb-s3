@@ -24,7 +24,24 @@ MONGODB_READ_PREFERENCE='secondaryPreferred'
 RETENTION_PERIOD='7d'
 MINIO_COMMAND='mc'
 DISCORD_WEBHOOK_URL=''
+COLLECTIONS='db.collection1:day:_parent db.collection2:month db.collection3'
 ```
+
+## Strategies
+The script supports different backup strategies for creating partial backups of specific collections.
+If no collections are defined, a full dump of the mongodb instance will be created (all databases and collections).
+
+The strategies are defined in the `COLLECTIONS` environment variable as a space-separated list of `db.collection:STRATEGY:FIELD` pairs.
+Both `:FIELD` and `:STRATEGY` are optional and will default to `full` and `_id` respectively.
+
+Supported strategies:
+- `full`: full backup of the collection
+- `day`: [yesterday 00:00, today 00:00)
+- `week`: [Monday of last week 00:00, Monday of this week 00:00)
+- `month`: [1st day of last month 00:00, 1st day of this month 00:00)
+
+The `FIELD` defines the field used for filtering the documents in the collection (default is `_id`).
+This can be changed if a collection references another object which should be used as the filter field (e.g. `_parent`).
 
 ## Cron backup with kubernetes
 

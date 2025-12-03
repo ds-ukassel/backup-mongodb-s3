@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -eo pipefail
 
 # Required environment variables
 : "${MONGODB_URI:?Missing MONGODB_URI}"
@@ -14,8 +14,7 @@ MONGODB_READ_PREFERENCE="${MONGODB_READ_PREFERENCE:-secondaryPreferred}"
 RETENTION_PERIOD="${RETENTION_PERIOD:-}"
 MINIO_COMMAND="${MINIO_COMMAND:-mc}"
 DISCORD_WEBHOOK_URL="${DISCORD_WEBHOOK_URL:-}"
-COLLECTION_STRATEGIES="${COLLECTION_STRATEGIES:-}"
-STRATEGY_ID="${STRATEGY_ID:-_id}"
+COLLECTIONS="${COLLECTIONS:-}"
 
 NOW=$(date +%Y%m%d_%H%M%S)
 
@@ -37,8 +36,8 @@ $MINIO_COMMAND alias set storage "$MINIO_ENDPOINT" "$MINIO_ACCESS_KEY" "$MINIO_S
 $MINIO_COMMAND mb -p "storage/$MINIO_BUCKET"
 
 # If no collection strategies are specified, dump the whole instance
-if [ -z "$COLLECTION_STRATEGIES" ]; then
-  echo "[mongodb-backup] No collection strategies specified. Dumping entire MongoDB instance and uploading..."
+if [ -z "$COLLECTIONS" ]; then
+  echo "[mongodb-backup] No collections specified. Dumping entire MongoDB instance and uploading..."
 
   mongodump --archive --gzip --readPreference=$MONGODB_READ_PREFERENCE --uri "$MONGODB_URI" | \
   $MINIO_COMMAND pipe "storage/$MINIO_BUCKET/$MINIO_PATH/mongodump_$NOW.bson.gz"
@@ -46,16 +45,24 @@ if [ -z "$COLLECTION_STRATEGIES" ]; then
   echo "[mongodb-backup] Successfully uploaded mongodump_$NOW.bson.gz to $MINIO_BUCKET bucket"
 else
   echo "[mongodb-backup] Collection strategies specified. Dumping specified collections..."
-  for COLLECTION_STRATEGY in $COLLECTION_STRATEGIES; do
-    [ -z "$COLLECTION_STRATEGY" ] && continue # Skip empty entries
+  for DB_COLL_STRATEGY_FIELD in $COLLECTIONS; do
+    [ -z "$DB_COLL_STRATEGY_FIELD" ] && continue # Skip empty entries
 
-    # db.coll.ection=strategy
-    STRATEGY="${COLLECTION_STRATEGY#*=}" # Remove everything before =
-    DATABASE_COLLECTION="${COLLECTION_STRATEGY%%=*}" # Remove everything after =
-    DATABASE="${DATABASE_COLLECTION%%.*}" # Remove everything after first .
-    COLLECTION="${DATABASE_COLLECTION#*.}" # Remove everything before first .
+    # db.collection:STRATEGY:FIELD
+    IFS=':' read -r DB_COLL STRATEGY FIELD <<< "$DB_COLL_STRATEGY_FIELD"
 
-    echo "[mongodb-backup] Processing collection '$DATABASE.$COLLECTION' with strategy '$STRATEGY'..."
+    if [ -z "$DB_COLL" ]; then
+      echo "[mongodb-backup] Skipping invalid entry: '$DB_COLL_STRATEGY_FIELD' (missing db.collection)"
+      continue
+    fi
+
+    DATABASE="${DB_COLL%%.*}" # remove everything after first .
+    COLLECTION="${DB_COLL#*.}" # remove everything before first .
+    STRATEGY="${STRATEGY:-FULL}"
+    STRATEGY="${STRATEGY^^}" # uppercase
+    FIELD="${FIELD:-_id}"
+
+    echo "[mongodb-backup] Processing collection '$DATABASE.$COLLECTION' with strategy '$STRATEGY' on field '$FIELD'..."
     if [ "${STRATEGY^^}" != "FULL" ]; then
       QUERY=$(python3 /usr/local/bin/query-generator.py "$STRATEGY" "$STRATEGY_ID")
     else

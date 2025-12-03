@@ -50,10 +50,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     strategy = sys.argv[1].upper()
-    if strategy == 'FULL':
-        print("")
-        sys.exit(0)
-
     field = sys.argv[2]
 
     try:

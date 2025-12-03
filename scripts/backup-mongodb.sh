@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 # Required environment variables
@@ -56,6 +56,11 @@ else
     COLLECTION="${DATABASE_COLLECTION#*.}" # Remove everything before first .
 
     echo "[mongodb-backup] Processing collection '$DATABASE.$COLLECTION' with strategy '$STRATEGY'..."
+    if [ "${STRATEGY^^}" != "FULL" ]; then
+      QUERY=$(python3 /usr/local/bin/query-generator.py "$STRATEGY" "$STRATEGY_ID")
+    else
+      QUERY=""
+    fi
 
     mongodump --archive --gzip --readPreference=$MONGODB_READ_PREFERENCE --uri "$MONGODB_URI" --db "$DATABASE" --collection "$COLLECTION" --query "$QUERY" | \
     $MINIO_COMMAND pipe "storage/$MINIO_BUCKET/$MINIO_PATH/${COLLECTION}_$NOW.bson.gz"

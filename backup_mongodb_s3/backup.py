@@ -93,7 +93,7 @@ def main() -> None:
             utils.webhook("Backup process failed due to incomplete MinIO configuration.")
             sys.exit(1)
 
-        if not config.MONGODB_URL:
+        if not config.MONGODB_URI:
             print("[mongodb-backup] Incomplete MongoDB configuration. Check your environment variables.", file=sys.stderr)
             utils.webhook("Backup process failed due to incomplete MongoDB configuration.")
             sys.exit(1)
@@ -118,7 +118,7 @@ def main() -> None:
 
         # Create MongoDB client
         try:
-            mongo = MongoClient(config.MONGODB_URL)
+            mongo = MongoClient(config.MONGODB_URI)
         except Exception as e:
             print(f"[mongodb-backup] Failed to connect to MongoDB. Check your MongoDB configuration: {e}", file=sys.stderr)
             utils.webhook("Backup process failed due to invalid MongoDB configuration.")
@@ -165,7 +165,7 @@ def main() -> None:
                     minio_client=minio,
                     minio_bucket=config.MINIO_BUCKET,
                     minio_file_name=f"{config.MINIO_PATH}/{filename}",
-                    mongo_uri=config.MONGODB_URL,
+                    mongo_uri=config.MONGODB_URI,
                     mongo_database=database,
                     mongo_collection=collection if collection else None,
                     mongo_query=json.dumps(bounds, default=json_util.default) if bounds else None

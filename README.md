@@ -10,14 +10,14 @@ When not using Docker, make sure to install it first.
 MONGODB_URI="mongodb://root:password@mongodb:27017/?authSource=admin&readPreference=primaryPreferred"
 MONGODB_COLLECTIONS=
 
-MINIO_ENDPOINT=
-MINIO_ACCESS_KEY=
-MINIO_SECRET_KEY=
-MINIO_BUCKET=
+MINIO_ENDPOINT="localhost:9000"
+MINIO_ACCESS_KEY="minioadmin"
+MINIO_SECRET_KEY="minioadmin"
+MINIO_BUCKET="backups"
 MINIO_PATH="backups"
 MINIO_SECURE=false
 
-RETENTION_PERIOD=
+RETENTION_PERIOD="7d"
 DISCORD_WEBHOOK_URL=
 ```
 

@@ -42,7 +42,7 @@ When setting `DISCORD_WEBHOOK_URL`, a notification will be sent to the specified
 ### Backup Settings
 
 The collections and their corresponding backup settings are provided by the `MONGODB_COLLECTIONS` environment variable as a YAML list of objects.
-Alternatively you can simply provide the name as a string, which will be treated as a full backup of the database.
+Alternatively you can simply provide the identifier as a string, which will be treated as a full backup of the database or collection.
 
 ```yaml
 # Backup all entries in the collection "shop.customers"
@@ -58,6 +58,9 @@ Alternatively you can simply provide the name as a string, which will be treated
 
 # Backup the whole database "shop" (equivalent to `- database: "shop"`)
 - shop
+
+# Backup all entries in the collection "shop.customers" (equivalent to first example)
+- shop.customers
 ```
 
 For each entry, the `database` field is required.

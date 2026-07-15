@@ -16,7 +16,11 @@ from backup_mongodb_s3.query_generator import strategy_to_query, Strategy, TimeS
 
 def extract_settings(entry: str | dict[str, str]) -> tuple[str, str, str, str, str]:
     if isinstance(entry, str):
-        entry = {"database": entry}
+        if "." in entry:
+            database, collection = entry.split(".", 1)
+            entry = {"database": database, "collection": collection}
+        else:
+            entry = {"database": entry}
 
     database = entry.get("database", "")
     collection = entry.get("collection", "")

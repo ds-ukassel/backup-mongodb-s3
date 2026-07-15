@@ -78,7 +78,7 @@ def check_entries(mongo: MongoClient, entries: list[str | dict[str, str]]) -> bo
             print(f"[mongodb-backup] Invalid timestamp column '{ts_column}' for collection '{collection}'.", file=sys.stderr)
             return False
 
-        if ts_format and ts_format not in ("OID", "EPOCH", "DT"):
+        if ts_format and ts_format not in ("OID", "EPOCH", "ISO"):
             print(f"[mongodb-backup] Unsupported timestamp format '{ts_format}' for entry: {entry}", file=sys.stderr)
             return False
 

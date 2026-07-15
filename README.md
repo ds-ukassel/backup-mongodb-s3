@@ -54,7 +54,7 @@ Alternatively you can simply provide the name as a string, which will be treated
   collection: "orders"
   strategy: "WEEK"
   ts_column: "created_at"
-  ts_format: "DT"
+  ts_format: "ISO"
 
 # Backup the whole database "shop" (equivalent to `- database: "shop"`)
 - shop
@@ -79,5 +79,5 @@ The `ts_format` defines the format of the column and will default to `OID` if no
 
 Supported formats:
 - `OID`: ObjectId (from MongoDB)
-- `DT`: DateTime (e.g. `2026-02-02 12:00:00`)
+- `ISO`: ISO Date (e.g. `2026-02-02 12:00:00`)
 - `EPOCH`: Unix timestamp (e.g. `1770988180`)

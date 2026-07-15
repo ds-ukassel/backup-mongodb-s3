@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Literal, Tuple, Any
 
 Strategy = Literal["FULL", "DAY", "WEEK", "MONTH"]
-TimeStampFormat = Literal["OID", "EPOCH", "DT"]
+TimeStampFormat = Literal["OID", "EPOCH", "ISO"]
 
 def date_to_epoch_seconds(date: datetime) -> int:
     return int(date.timestamp())
@@ -42,8 +42,8 @@ def _resolve_date_range(strategy: Strategy, now: datetime = datetime.now(timezon
 
 def _resolve_bounds(ts_format: TimeStampFormat, start: datetime, end: datetime) -> dict[str, dict[str, str] | datetime | int]:
     """
-    Resolves the bounds ($gte, $lt) for a given timestamp format (OID, EPOCH, DT) based on the start and end datetime.
-    :param ts_format: The timestamp format to resolve the bounds for. Can be "OID", "EPOCH", or "DT".
+    Resolves the bounds ($gte, $lt) for a given timestamp format (OID, EPOCH, ISO) based on the start and end datetime.
+    :param ts_format: The timestamp format to resolve the bounds for. Can be "OID", "EPOCH", or "ISO".
     :param start: The start datetime.
     :param end: The end datetime.
     :return: A dictionary containing the resolved bounds ($gte, $lt) for the given timestamp format based on the start and end datetime.
@@ -62,7 +62,7 @@ def _resolve_bounds(ts_format: TimeStampFormat, start: datetime, end: datetime) 
                 "$gte": start_epoch,
                 "$lt": end_epoch,
             }
-        case "DT":
+        case "ISO":
             return {
                 "$gte": start,
                 "$lt": end,

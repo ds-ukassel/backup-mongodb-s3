@@ -93,7 +93,7 @@ def main() -> None:
             utils.webhook("Backup process failed due to incomplete MinIO configuration.")
             sys.exit(1)
 
-        if not all([config.MONGODB_URL, config.MONGODB_READ_PREFERENCE]):
+        if not config.MONGODB_URL:
             print("[mongodb-backup] Incomplete MongoDB configuration. Check your environment variables.", file=sys.stderr)
             utils.webhook("Backup process failed due to incomplete MongoDB configuration.")
             sys.exit(1)

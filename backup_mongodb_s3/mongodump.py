@@ -16,7 +16,6 @@ def mongodump_to_minio_stream(
         "mongodump",
         "--archive",
         "--gzip",
-        "--readPreference", config.MONGODB_READ_PREFERENCE,
         "--uri", mongo_uri,
         "--db", mongo_database,
     ]

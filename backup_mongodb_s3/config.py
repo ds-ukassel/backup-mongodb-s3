@@ -1,8 +1,7 @@
 import os
 
-MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://root:password@mongodb:27017/?authSource=admin")
+MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://root:password@mongodb:27017/?authSource=admin&readPreference=primaryPreferred")
 MONGODB_COLLECTIONS = os.getenv("MONGODB_COLLECTIONS", "")
-MONGODB_READ_PREFERENCE = os.getenv("MONGODB_READ_PREFERENCE", "primaryPreferred")
 
 MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "")
 MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "")

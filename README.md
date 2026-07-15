@@ -7,9 +7,8 @@ When not using Docker, make sure to install it first.
 ## Configuration
 
 ```bash
-MONGODB_URL="mongodb://root:password@mongodb:27017/?authSource=admin"
+MONGODB_URL="mongodb://root:password@mongodb:27017/?authSource=admin&readPreference=primaryPreferred"
 MONGODB_COLLECTIONS=
-MONGODB_READ_PREFERENCE="primaryPreferred"
 
 MINIO_ENDPOINT=
 MINIO_ACCESS_KEY=

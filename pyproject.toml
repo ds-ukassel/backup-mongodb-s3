@@ -1,0 +1,21 @@
+[project]
+name = "backup-mongodb-s3"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "minio~=7.2.15",
+    "discord-webhook~=1.4.1",
+    "PyYAML~=6.0.0",
+    "timedeltaparse>=0.0.1",
+    "pymongo>=4.17.0",
+]
+
+[project.scripts]
+backup = "backup_mongodb_s3.backup:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["backup_mongodb_s3"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

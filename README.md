@@ -4,6 +4,15 @@ Simple script for backing up mongodb databases to an S3 (minio) bucket using dif
 The script internally uses [`mongodump`](https://www.mongodb.com/docs/database-tools/mongodump/) to create the backups.
 When not using Docker, make sure to install it first.
 
+## Usage
+
+- Latest version (Python):
+  - Image: `registry.uni-kassel.dev/backup/mongodb-s3`
+  - Tag: `latest` or `v2`
+- Legacy version (Shell Script):
+  - Docs/source: Git tag `v1`
+  - Image Tag: `v1`
+
 ## Configuration
 
 ```bash

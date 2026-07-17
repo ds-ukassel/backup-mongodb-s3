@@ -1,11 +1,22 @@
 FROM alpine:latest
 
-RUN --mount=type=cache,target=/etc/apk/cache apk add --update-cache curl bash mongodb-tools minio-client python3
+RUN --mount=type=cache,target=/etc/apk/cache apk add --update-cache mongodb-tools python3
 
-COPY scripts/backup-mongodb.sh /usr/local/bin/backup-mongodb.sh
-RUN chmod +x /usr/local/bin/backup-mongodb.sh
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
-COPY scripts/query-generator.py /usr/local/bin/query-generator.py
+WORKDIR /app
 
-ENV MINIO_COMMAND="mcli"
-CMD ["/usr/local/bin/backup-mongodb.sh"]
+
+ENV UV_LOCKED=1 UV_NO_SYNC=1 UV_NO_DEV=1
+# See https://docs.astral.sh/uv/guides/integration/docker/#intermediate-layers
+RUN --mount=type=cache,id=uv,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --no-install-project
+
+COPY . /app
+
+RUN --mount=type=cache,id=uv,target=/root/.cache/uv \
+    uv sync --compile-bytecode
+
+CMD ["uv", "run", "backup"]

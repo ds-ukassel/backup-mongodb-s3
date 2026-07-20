@@ -40,11 +40,14 @@ A year is considered as 365 days and a month is considered as 30 days.
 
 To disable this feature, leave `RETENTION_PERIOD` empty.
 
-`MONGODB_COLLECTIONS` can be used to specify the tables to back up (see [Backup Settings](#backup-settings)).
+`MONGODB_COLLECTIONS` can be used to specify the collections to back up (see [Backup Settings](#backup-settings)).
 
-Backups will be stored under the specified `MINIO_PATH` in the bucket `MINIO_BUCKET`, with filenames in the format `<database>_<collection>_<strategy>_<date>.<extension>`.
+Backups will be stored under the specified `MINIO_PATH` in the bucket `MINIO_BUCKET`, with filenames in the format `<database>_<collection>_<strategy>_<date>.bson.gz`.
 The `date` will depend on the strategy and include the timestamp of the backup (for `FULL` strategy) or the start date of the backup (for other strategies).
 If the whole database is backed up, the collection will be omitted from the filename.
+
+If no collections/databases are specified, the database specified in the `MONGODB_URI` will be backed up.
+The filename will be `backup_FULL_<date>.bson.gz`.
 
 When setting `DISCORD_WEBHOOK_URL`, a notification will be sent to the specified Discord webhook if the backup fails.
 

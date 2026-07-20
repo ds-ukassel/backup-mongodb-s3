@@ -8,7 +8,7 @@ def mongodump_to_minio_stream(
         minio_bucket: str,
         minio_file_name: str,
         mongo_uri: str,
-        mongo_database: str,
+        mongo_database: str | None = None,
         mongo_collection: str | None = None,
         mongo_query: str | None = None,
 ):
@@ -17,8 +17,10 @@ def mongodump_to_minio_stream(
         "--archive",
         "--gzip",
         "--uri", mongo_uri,
-        "--db", mongo_database,
     ]
+
+    if mongo_database:
+        command += ["--db", mongo_database]
 
     if mongo_collection:
         command += ["--collection", mongo_collection]

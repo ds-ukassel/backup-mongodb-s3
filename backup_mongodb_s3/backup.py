@@ -103,9 +103,7 @@ def main() -> None:
             sys.exit(1)
 
         if not config.MONGODB_COLLECTIONS.strip():
-            print("[mongodb-backup] No databases/collections specified for backup.", file=sys.stderr)
-            utils.webhook("Backup process stopped due to missing collections configuration.")
-            sys.exit(0)
+            print("[mongodb-backup] No databases/collections specified for backup. Assuming database is set using MONGODB_URI...")
 
         # Create Minio Client
         try:
@@ -138,46 +136,62 @@ def main() -> None:
             sys.exit(1)
 
         # Load collection configuration
-        try:
-            entries = yaml.safe_load(config.MONGODB_COLLECTIONS)
-            if not isinstance(entries, list):
-                raise ValueError("Must be a YAML array of collection entries.")
-        except Exception as e:
-            print(f"[mongodb-backup] Failed to parse collections: {e}", file=sys.stderr)
-            utils.webhook("Backup process failed due to invalid collection configuration.")
-            sys.exit(1)
+        if config.MONGODB_COLLECTIONS.strip():
+            try:
+                entries = yaml.safe_load(config.MONGODB_COLLECTIONS)
+                if not isinstance(entries, list):
+                    raise ValueError("Must be a YAML array of collection entries.")
+            except Exception as e:
+                print(f"[mongodb-backup] Failed to parse collections: {e}", file=sys.stderr)
+                utils.webhook("Backup process failed due to invalid collection configuration.")
+                sys.exit(1)
 
-        # Check if collections are valid and exist
-        if not check_entries(mongo, entries):
-            utils.webhook("Backup process failed due to invalid collection configuration.") # Webhook is enough, prints are done in check_entries
-            sys.exit(1)
+            # Check if collections are valid and exist
+            if not check_entries(mongo, entries):
+                utils.webhook("Backup process failed due to invalid collection configuration.") # Webhook is enough, prints are done in check_entries
+                sys.exit(1)
 
-        # Go through all entries
-        for entry in entries:
+            # Go through all entries
+            for entry in entries:
 
-            # Get settings from entry
-            database, collection, strategy, ts_column, ts_format = extract_settings(entry)
+                # Get settings from entry
+                database, collection, strategy, ts_column, ts_format = extract_settings(entry)
 
-            # Generate query (at this point, the settings are checked, so we can cast without issues)
-            filename, bounds = strategy_to_query(cast(Strategy, strategy), database, collection, ts_column, cast(TimeStampFormat, ts_format))
+                # Generate query (at this point, the settings are checked, so we can cast without issues)
+                filename, bounds = strategy_to_query(cast(Strategy, strategy), database, collection, ts_column, cast(TimeStampFormat, ts_format))
 
-            # Execute backup
-            backup_name = f"{database}.{collection}" if collection else database
-            print(f"[mongodb-backup] Executing backup for {backup_name} with strategy '{strategy}'...")
+                # Execute backup
+                backup_name = f"{database}.{collection}" if collection else database
+                print(f"[mongodb-backup] Executing backup for {backup_name} with strategy '{strategy}'...")
+                try:
+                    mongodump_to_minio_stream(
+                        minio_client=minio,
+                        minio_bucket=config.MINIO_BUCKET,
+                        minio_file_name=f"{config.MINIO_PATH}/{filename}",
+                        mongo_uri=config.MONGODB_URI,
+                        mongo_database=database,
+                        mongo_collection=collection if collection else None,
+                        mongo_query=json.dumps(bounds, default=json_util.default) if bounds else None
+                    )
+                    print(f"[mongodb-backup] Backup for '{backup_name}' completed successfully.")
+                except Exception as e:
+                    print(f"[mongodb-backup] Backup for collection '{backup_name}' failed with error: {e}", file=sys.stderr)
+                    utils.webhook(f"Backup of MongoDB collection `{backup_name}` failed.")
+                    sys.exit(1)
+        else:
+            timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+            filename = "backup_FULL_" + timestamp + ".bson.gz"
             try:
                 mongodump_to_minio_stream(
                     minio_client=minio,
                     minio_bucket=config.MINIO_BUCKET,
                     minio_file_name=f"{config.MINIO_PATH}/{filename}",
                     mongo_uri=config.MONGODB_URI,
-                    mongo_database=database,
-                    mongo_collection=collection if collection else None,
-                    mongo_query=json.dumps(bounds, default=json_util.default) if bounds else None
                 )
-                print(f"[mongodb-backup] Backup for '{backup_name}' completed successfully.")
+                print(f"[mongodb-backup] Backup for whole database completed successfully.")
             except Exception as e:
-                print(f"[mongodb-backup] Backup for collection '{backup_name}' failed with error: {e}", file=sys.stderr)
-                utils.webhook(f"Backup of MongoDB collection `{backup_name}` failed.")
+                print(f"[mongodb-backup] Backup for whole database failed with error: {e}", file=sys.stderr)
+                utils.webhook(f"Backup of whole MongoDB database failed.")
                 sys.exit(1)
 
         if config.RETENTION_PERIOD.strip():

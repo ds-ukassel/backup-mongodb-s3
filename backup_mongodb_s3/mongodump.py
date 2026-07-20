@@ -1,6 +1,6 @@
 import subprocess
+
 from minio import Minio
-from backup_mongodb_s3 import config
 
 
 def mongodump_to_minio_stream(
@@ -29,7 +29,7 @@ def mongodump_to_minio_stream(
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=None,
         bufsize=1024 * 1024,
     )
 
@@ -46,10 +46,9 @@ def mongodump_to_minio_stream(
             content_type="application/gzip",
         )
 
-        _, stderr = process.communicate()
-
-        if process.returncode != 0:
-            raise RuntimeError(stderr.decode("utf-8", errors="replace"))
+        returncode = process.wait()
+        if returncode != 0:
+            raise RuntimeError(f"mongodump failed with exit code {returncode}")
 
     finally:
         process.kill()

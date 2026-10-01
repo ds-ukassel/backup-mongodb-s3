@@ -7,7 +7,7 @@ dependencies = [
     "discord-webhook~=1.4.1",
     "PyYAML~=6.0.0",
     "timedeltaparse>=0.0.1",
-    "pymongo>=4.17.0",
+    "pymongo>=4.18.2",
 ]
 
 [project.scripts]
